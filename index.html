@@ -114,6 +114,31 @@ html.drawer-open,html.drawer-open body{overflow:hidden}
 .placeholder{background:var(--sheet);border-radius:6px;box-shadow:var(--shadow);border-top:6px solid var(--omr);padding:28px 20px;text-align:center;display:flex;flex-direction:column;gap:8px;align-items:center}
 .placeholder h2{font-family:"Do Hyeon",sans-serif;font-weight:400;font-size:26px;margin:0}
 .placeholder p{margin:0;color:var(--muted)}
+.today-title{font-family:"Do Hyeon",sans-serif;font-weight:400;font-size:clamp(30px,8vw,38px);line-height:1.1;margin:0}
+.today-title span{color:var(--omr)}
+.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.step{display:flex;align-items:center;gap:14px;border:1px solid var(--line);border-radius:6px;padding:12px 14px}
+.step b{display:block;font-weight:700}
+.step small{display:block;color:var(--muted);font-size:13px}
+.step.done{border-color:var(--good);background:var(--good-soft)}
+.step.done .bubble{background:var(--good);border-color:var(--good);color:#fff}
+.step.now{border-color:var(--omr)}
+.btn.big{width:100%;min-height:52px;font-size:17px;border-radius:8px}
+.today-actions{display:flex;flex-direction:column;gap:8px}
+.today-actions .row{justify-content:center}
+.today-more{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:420px){.today-more{grid-template-columns:1fr}}
+.mini{background:var(--sheet);border-radius:6px;box-shadow:var(--shadow);padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+.mini h3{margin:0;font-size:12px;font-weight:500;color:var(--muted);letter-spacing:.06em}
+.mini .big-num{font-family:"IBM Plex Mono",monospace;font-weight:600;font-size:22px;line-height:1.2}
+.recent{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+.recent a{display:flex;justify-content:space-between;gap:8px;color:var(--ink);text-decoration:none;padding:2px 0}
+.recent a:hover{color:var(--omr)}
+.recent a:focus-visible{outline:3px solid var(--omr);outline-offset:2px}
+.recent .ok{color:var(--good)}
+.linkbtn{font:inherit;font-weight:500;color:var(--omr);background:none;border:0;padding:4px 0;cursor:pointer;text-align:left;text-decoration:underline;text-underline-offset:3px;min-height:32px}
+.linkbtn:disabled{color:var(--muted);text-decoration:none;cursor:default}
+.linkbtn:focus-visible{outline:3px solid var(--omr);outline-offset:2px}
 .scope{display:inline-flex;align-items:center;gap:6px;font-size:13px}
 .scope select{font:inherit;font-weight:500;color:var(--ink);background:var(--sheet);border:1.5px solid var(--ink);border-radius:999px;padding:7px 12px;min-height:40px}
 .scope select:focus-visible{outline:3px solid var(--omr);outline-offset:2px}
@@ -180,7 +205,7 @@ html.drawer-open,html.drawer-open body{overflow:hidden}
   </header>
 
   <section class="panel" id="panelToday" hidden>
-    <div class="placeholder"><h2>오늘</h2><p>준비 중이에요. 지금은 목차에서 단어장이나 퀴즈로 가 주세요.</p></div>
+    <div id="todayBox"></div>
   </section>
 
   <section class="panel" id="panelWrong" hidden>
@@ -253,6 +278,29 @@ function recordDayQuiz(d,score){
   save();
 }
 function markSeen(d){const r=dayRec(d); if(!r.seen){r.seen=true; save()}}
+
+// 오늘 일차: 2026-09-22(화) = 1일차, 월~토만 하루씩 늘고 일요일은 건너뛴다(한국 시간 날짜 기준)
+const START_DATE="2026-09-22", DAY_MS=864e5;
+const utc=s=>{const [y,m,d]=s.split("-").map(Number); return Date.UTC(y,m-1,d)};
+const ymd=t=>new Date(t).toISOString().slice(0,10);
+const weekday=s=>new Date(utc(s)).getUTCDay(); // 0=일요일
+function dayNumberOn(s){
+  let n=0;
+  for(let t=utc(START_DATE);t<=utc(s);t+=DAY_MS) if(new Date(t).getUTCDay()!==0) n++;
+  return n;
+}
+// 확인용: 주소에 ?today=2026-09-27 을 붙이면 그 날짜로 계산한다
+const todayDate=()=>{const q=new URLSearchParams(location.search).get("today"); return /^\d{4}-\d{2}-\d{2}$/.test(q||"")?q:todayKST()};
+function todayPlan(){
+  const s=todayDate(), last=DAYS[DAYS.length-1];
+  if(weekday(s)===0){
+    // 일요일: 그 주 월~토 일차들로 총정리. words.js에 있는 일차만 쓴다
+    const week=[...new Set([6,5,4,3,2,1].map(k=>dayNumberOn(ymd(utc(s)-k*DAY_MS))))].filter(d=>DAYS.includes(d));
+    return {date:s,sunday:true,days:week.length?week:[last]};
+  }
+  const n=dayNumberOn(s);
+  return {date:s,sunday:false,day:DAYS.includes(n)?n:last};
+}
 const sheet=$("sheet");
 const LETTERS=["A","B","C","D"];
 let round=null;
@@ -409,6 +457,9 @@ function markCurrent(){
   const here="#"+(view==="book"?"book-"+bookDay:view);
   document.querySelectorAll("#side a").forEach(a=>a.getAttribute("href")===here?a.setAttribute("aria-current","page"):a.removeAttribute("aria-current"));
 }
+// 다른 화면에서 퀴즈를 시작할 때는 먼저 #quiz로 옮긴 뒤 시작한다. 먼저 시작하면 첫 문제 자동 발음이 화면 전환 때 끊긴다
+let pendingStart=null;
+function goQuiz(fn){pendingStart=fn; if(location.hash==="#quiz") onRoute(); else location.hash="quiz"}
 function onRoute(){
   let r=parseHash();
   // 알 수 없는 주소는 기록을 남기지 않고 #today로 바꾼다
@@ -419,7 +470,12 @@ function onRoute(){
   markCurrent();
   document.title=(view==="book"?bookDay+"일차 단어장":TITLES[view])+" · 토익 단어 OMR";
   renderStats();
-  if(view==="book"){markSeen(bookDay); renderBook()} else if(view==="quiz"&&!round) start(false);
+  if(view==="book"){markSeen(bookDay); renderBook()}
+  else if(view==="today") renderToday();
+  else if(view==="quiz"){
+    if(pendingStart){const f=pendingStart; pendingStart=null; f()}
+    else if(!round) start(false);
+  }
   window.scrollTo(0,0);
 }
 
@@ -446,6 +502,58 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape") closeDrawer()});
 matchMedia("(min-width:900px)").addEventListener?.("change",e=>{if(e.matches) closeDrawer(false)});
 window.addEventListener("hashchange",onRoute);
 
+const WEEK=["일","월","화","수","목","금","토"];
+const fmtDate=s=>{const [,m,d]=s.split("-").map(Number); return `${m}월 ${d}일 (${WEEK[weekday(s)]})`};
+const scoreText=d=>{const r=store.days[d]; return r&&r.best!=null?`${r.best}/${dayTotal(d)}`:"—"};
+const allWrong=()=>Object.keys(store.wrong).map(k=>WORDS.findIndex(w=>w.w===k)).filter(i=>i>=0);
+function renderToday(){
+  const p=todayPlan(), box=$("todayBox"), wrongN=allWrong().length;
+  let main;
+  if(p.sunday){
+    const pool=WORDS.map((_,i)=>i).filter(i=>p.days.includes(dayOf(i)));
+    const range=p.days.length>1?`${p.days[0]}–${p.days[p.days.length-1]}일차`:`${p.days[0]}일차`;
+    main=`<div class="sheet">
+      <div class="qhead"><span>${fmtDate(p.date)}</span><span class="mono">총정리</span></div>
+      <h2 class="today-title">오늘 · <span>총정리 날</span></h2>
+      <p class="hint" style="margin:0">이번 주 ${range} · ${pool.length}단어에서 20문제</p>
+      <ol class="steps">${p.days.map(d=>`<li class="step${isDone(d)?" done":""}"><span class="bubble">${d}</span><div><b>${d}일차</b><small>최고 ${scoreText(d)}${isDone(d)?" · 완료":""}</small></div></li>`).join("")}</ol>
+      <div class="today-actions"><button class="btn primary big" id="todayMain">총정리 20문제</button></div>
+    </div>`;
+    box.innerHTML=main+more(p.days[p.days.length-1],wrongN);
+    $("todayMain").addEventListener("click",()=>goQuiz(()=>start(false,{pool,label:`${range} 총정리`})));
+  }else{
+    const d=p.day, r=store.days[d]||{}, seen=!!r.seen, done=isDone(d);
+    // 지금 할 차례: 단어장 → 퀴즈 → (완료) 다시 풀기
+    const step1=`<li class="step${seen?" done":" now"}"><span class="bubble">1</span><div><b>단어장 보기</b><small>${seen?"완료":"아직 안 봤어요"}</small></div></li>`;
+    const step2=`<li class="step${done?" done":seen?" now":""}"><span class="bubble">2</span><div><b>퀴즈 20문제</b><small>${r.best!=null?`최고 ${scoreText(d)}${done?" · 완료":` · ${Math.ceil(dayTotal(d)*.9)}점 이상이면 완료`}`:"아직 안 풀었어요"}</small></div></li>`;
+    const actions=!seen?`<button class="btn primary big" id="todayMain">단어장 보기</button>`
+      :!done?`<button class="btn primary big" id="todayMain">퀴즈 풀기</button>`
+      :`<p class="hint" style="text-align:center;margin:0">오늘 학습을 마쳤어요.</p><div class="row"><button class="btn" id="todayAgain">다시 풀기</button><a class="btn" href="#book-${d}" style="text-decoration:none">단어장 다시 보기</a></div>`;
+    box.innerHTML=`<div class="sheet">
+      <div class="qhead"><span>${fmtDate(p.date)}</span><span class="mono">${dayRange(d).length}단어</span></div>
+      <h2 class="today-title">오늘 · <span>${d}일차</span></h2>
+      <ol class="steps">${step1}${step2}</ol>
+      <div class="today-actions">${actions}</div>
+    </div>`+more(d,wrongN);
+    const dayQuiz=()=>{day=d; saveUi(); goQuiz(()=>start(false))};
+    if(!seen) $("todayMain").addEventListener("click",()=>{location.hash="book-"+d});
+    else if(!done) $("todayMain").addEventListener("click",dayQuiz);
+    else $("todayAgain").addEventListener("click",dayQuiz);
+  }
+  $("todayReview").addEventListener("click",()=>goQuiz(()=>start(true,{pool:allWrong(),label:"오답 복습"})));
+}
+// 하단 보조 정보: 오답노트, 최근 3일 점수
+function more(upTo,wrongN){
+  const recent=DAYS.filter(d=>d<=upTo).slice(-3).reverse();
+  return `<div class="today-more">
+    <section class="mini" aria-label="오답노트"><h3>오답노트</h3>
+      <span class="big-num">${wrongN}<small style="font-size:13px;color:var(--muted)"> 단어</small></span>
+      <button class="linkbtn" id="todayReview"${wrongN?"":" disabled"}>${wrongN?"오답 복습하기":"복습할 단어 없음"}</button></section>
+    <section class="mini" aria-label="최근 점수"><h3>최근 3일 점수</h3>
+      <ul class="recent">${recent.map(d=>`<li><a href="#book-${d}"><span>${d}일차</span><span class="mono${isDone(d)?" ok":""}">${scoreText(d)}</span></a></li>`).join("")}</ul></section>
+  </div>`;
+}
+
 // 한 판 20문제: 앞 15문제는 뜻 고르기, 뒤 5문제는 예문 빈칸
 const ROUND=20, BLANKS=5;
 
@@ -456,10 +564,17 @@ const canBlank=i=>wordRe(WORDS[i].w).test(WORDS[i].ex);
 // 같은 품사를 앞에 두고 나머지를 뒤에 섞어 붙인다
 const byPos=(list,pos)=>shuffle(list.filter(i=>WORDS[i].pos===pos)).concat(shuffle(list.filter(i=>WORDS[i].pos!==pos)));
 
+// 뜻이 같은 단어(employ·hire = 고용하다)가 보기에 같이 나오면 정답이 둘이 되므로, 정답·다른 보기와 뜻이 겹치는 단어는 건너뛴다
+function distinctKo(list,n,taken){
+  const out=[];
+  for(const i of list){if(out.length>=n) break; if(!taken.has(WORDS[i].ko)){taken.add(WORDS[i].ko); out.push(i)}}
+  return out;
+}
+
 function makeQuestion(idx){
   const w=WORDS[idx];
   // 같은 품사 오답을 우선 섞어 난이도를 올린다
-  const distract=byPos(WORDS.map((_,i)=>i).filter(i=>i!==idx),w.pos).slice(0,3);
+  const distract=distinctKo(byPos(WORDS.map((_,i)=>i).filter(i=>i!==idx),w.pos),3,new Set([w.ko]));
   const opts=shuffle([idx,...distract]);
   return {type:"meaning",idx,opts,answer:opts.indexOf(idx)};
 }
@@ -468,21 +583,24 @@ function makeBlank(idx){
   const w=WORDS[idx];
   const all=WORDS.map((_,i)=>i).filter(i=>i!==idx);
   // 같은 일차 단어만 보기에 나오지 않게 다른 일차 단어를 2개 먼저 넣는다. 다른 일차가 없으면 전체에서 채운다
-  const fromOther=byPos(all.filter(i=>WORDS[i].day!==w.day),w.pos).slice(0,2);
-  const distract=fromOther.concat(byPos(all.filter(i=>!fromOther.includes(i)),w.pos)).slice(0,3);
+  const taken=new Set([w.ko]);
+  const fromOther=distinctKo(byPos(all.filter(i=>WORDS[i].day!==w.day),w.pos),2,taken);
+  const distract=fromOther.concat(distinctKo(byPos(all.filter(i=>!fromOther.includes(i)),w.pos),3-fromOther.length,taken));
   const opts=shuffle([idx,...distract]);
   return {type:"blank",idx,opts,answer:opts.indexOf(idx)};
 }
 
-function start(review){
-  const pool=shuffle(review?wrongInScope():WORDS.map((_,i)=>i).filter(inScope)).slice(0,ROUND);
+// opt.pool: 범위 선택과 상관없는 단어 묶음(주간 총정리, 전체 오답 복습), opt.label: 화면에 보일 이름
+function start(review,opt={}){
+  const base=opt.pool||(review?wrongInScope():WORDS.map((_,i)=>i).filter(inScope));
+  const pool=shuffle(base).slice(0,ROUND);
   if(!pool.length) return;
   // 문제 수가 20보다 적으면(오답 복습 등) 빈칸 문제도 같은 비율로 줄인다
   const want=Math.floor(pool.length*BLANKS/ROUND);
   const blanks=pool.filter(canBlank).slice(0,want);
   const meanings=pool.filter(i=>!blanks.includes(i));
   const qs=meanings.map(makeQuestion).concat(blanks.map(makeBlank));
-  round={day,review,qs,i:0,score:0,missed:[],answered:false};
+  round={day:opt.pool?0:day,review,opt,label:opt.label,qs,i:0,score:0,missed:[],answered:false};
   renderQ();
 }
 
@@ -490,7 +608,7 @@ function renderQ(){
   const q=round.qs[round.i], w=WORDS[q.idx];
   round.answered=false;
   sheet.innerHTML=`
-    <div class="qhead"><span>${round.day?round.day+"일차 · ":"전체 · "}${round.review?"오답 복습":"실전 연습"}</span><span class="mono">${round.i+1} / ${round.qs.length}</span></div>
+    <div class="qhead"><span>${round.label||(round.day?round.day+"일차 · ":"전체 · ")+(round.review?"오답 복습":"실전 연습")}</span><span class="mono">${round.i+1} / ${round.qs.length}</span></div>
     <div class="progress"><i style="width:${round.i/round.qs.length*100}%"></i></div>
     ${q.type==="blank"
       ?`<p class="qtype">빈칸에 들어갈 단어를 고르세요</p>
@@ -537,21 +655,21 @@ function next(){
 function renderResult(){
   const r=round;
   stopSpeak();
-  // 일차 기록에는 일차 퀴즈만 넣는다. 전체 랜덤·오답 복습은 제외
+  // 일차 기록에는 일차 퀴즈만 넣는다. 전체 랜덤·오답 복습·주간 총정리는 제외(주간·전체 오답은 day가 0)
   const dayQuiz=r.day&&!r.review;
   if(dayQuiz){recordDayQuiz(r.day,r.score); renderNav()}
   const rec=dayQuiz&&store.days[r.day];
   sheet.innerHTML=`<div class="result">
-    <span class="hint">${r.review?"오답 복습":"실전 연습"} 결과</span>
+    <span class="hint">${r.label||(r.review?"오답 복습":"실전 연습")} 결과</span>
     <div class="score">${r.score}<span style="font-size:28px;color:var(--muted)"> / ${r.qs.length}</span></div>
     ${rec?`<span class="hint">${r.day}일차 최고 <span class="mono">${rec.best}/${dayTotal(r.day)}</span> · ${rec.count}번째 풀이${isDone(r.day)?" · 완료":""}</span>`:""}
     ${r.missed.length?`<div class="missed"><span class="hint">이번에 틀린 단어</span>${r.missed.map(i=>`<div><span class="mono">${WORDS[i].w}</span><span>${WORDS[i].ko}</span></div>`).join("")}</div>`:`<p>전부 맞혔어요.</p>`}
     <div class="modes" style="justify-content:center">
-      <button class="btn primary" id="again">${day?day+"일차 ":"새 "}20문제</button>
+      <button class="btn primary" id="again">${r.opt.pool&&!r.review?"한 번 더":(day?day+"일차 ":"새 ")+"20문제"}</button>
       ${wrongInScope().length?`<button class="btn" id="rev">오답만 복습</button>`:""}
     </div></div>`;
   round=null;
-  $("again").addEventListener("click",()=>start(false));
+  $("again").addEventListener("click",()=>r.opt.pool&&!r.review?start(false,r.opt):start(false));
   if($("rev")) $("rev").addEventListener("click",()=>start(true));
 }
 
@@ -567,7 +685,7 @@ $("hideToggle").addEventListener("change",e=>{hideMeaning=e.target.checked;saveU
 $("autoSpeak").checked=autoSpeak;
 $("autoSpeak").addEventListener("change",e=>{autoSpeak=e.target.checked;saveUi(); if(!autoSpeak) stopSpeak()});
 // 퀴즈를 비워 두고 이동하면 onRoute가 새 퀴즈를 시작한다. 먼저 시작하면 첫 문제 자동 발음이 화면 전환 때 끊긴다
-$("btnDayQuiz").addEventListener("click",()=>{day=bookDay;saveUi();round=null;location.hash="quiz"});
+$("btnDayQuiz").addEventListener("click",()=>{day=bookDay;saveUi();goQuiz(()=>start(false))});
 document.addEventListener("keydown",e=>{
   if(!round||view!=="quiz"||side.classList.contains("open")) return;
   const map={"1":0,"2":1,"3":2,"4":3,a:0,b:1,c:2,d:3};
