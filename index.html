@@ -118,7 +118,7 @@ h1 span{color:var(--omr)}
   <header>
     <div>
       <h1>토익 단어 <span>OMR</span></h1>
-      <p class="sub">하루 50단어 · 뜻 고르기 객관식 · 틀린 단어는 오답노트로</p>
+      <p class="sub">일차별 단어 · 뜻 고르기 객관식 · 틀린 단어는 오답노트로</p>
     </div>
   </header>
 
@@ -158,117 +158,18 @@ h1 span{color:var(--omr)}
   <p class="note">단어 <span class="mono" id="total"></span>개 수록 · 기록은 이 브라우저에만 저장돼요</p>
 </div>
 
+<script src="words.js"></script>
 <script>
-const WORDS = [
-["accommodate","v.","수용하다, 편의를 도모하다","The hall can accommodate 300 guests.","그 홀은 300명을 수용할 수 있다."],
-["allocate","v.","할당하다, 배분하다","We allocated more budget to marketing.","마케팅에 예산을 더 할당했다."],
-["anticipate","v.","예상하다, 기대하다","We anticipate a rise in sales.","매출 증가를 예상한다."],
-["comply","v.","(규정을) 따르다, 준수하다","All staff must comply with safety rules.","모든 직원은 안전 규정을 준수해야 한다."],
-["confidential","adj.","기밀의, 비밀의","This report is strictly confidential.","이 보고서는 극비이다."],
-["defective","adj.","결함이 있는","Please return any defective items.","결함 있는 제품은 반품해 주세요."],
-["expedite","v.","신속히 처리하다","Can you expedite the shipment?","배송을 빨리 처리해 줄 수 있나요?"],
-["inventory","n.","재고, 재고 목록","We check the inventory every Friday.","매주 금요일 재고를 확인한다."],
-["itinerary","n.","여행 일정표","Your itinerary is attached to this email.","여행 일정표가 이메일에 첨부되어 있다."],
-["mandatory","adj.","의무적인, 필수의","Attendance at the meeting is mandatory.","회의 참석은 필수이다."],
-["negotiate","v.","협상하다","They negotiated a new contract.","그들은 새 계약을 협상했다."],
-["postpone","v.","연기하다, 미루다","The launch was postponed until May.","출시가 5월로 연기되었다."],
-["reimburse","v.","(비용을) 상환하다, 환급하다","Travel expenses will be reimbursed.","출장 경비는 환급될 것이다."],
-["renovation","n.","보수, 개조","The lobby is closed for renovation.","로비는 보수 공사로 폐쇄되었다."],
-["subsidiary","n.","자회사","The firm opened a subsidiary in Vietnam.","그 회사는 베트남에 자회사를 열었다."],
-["tentative","adj.","잠정적인, 임시의","We made a tentative schedule.","잠정 일정을 세웠다."],
-["vendor","n.","판매 업체, 납품업자","We are looking for a new vendor.","새 납품업체를 찾고 있다."],
-["warranty","n.","품질 보증(서)","The laptop has a two-year warranty.","그 노트북은 2년 보증이 있다."],
-["adjacent","adj.","인접한, 가까운","The parking lot is adjacent to the building.","주차장은 건물 바로 옆에 있다."],
-["amend","v.","수정하다, 개정하다","The contract was amended last week.","계약서가 지난주 수정되었다."],
-["assess","v.","평가하다","We need to assess the risks.","위험을 평가해야 한다."],
-["candidate","n.","지원자, 후보자","Three candidates were interviewed.","지원자 세 명이 면접을 봤다."],
-["commence","v.","시작하다","The conference will commence at 9 a.m.","회의는 오전 9시에 시작한다."],
-["compensate","v.","보상하다","We will compensate you for the delay.","지연에 대해 보상해 드리겠습니다."],
-["consecutive","adj.","연속적인","Sales rose for three consecutive months.","매출이 3개월 연속 올랐다."],
-["deadline","n.","마감 기한","The deadline is next Monday.","마감은 다음 주 월요일이다."],
-["delegate","v.","(권한을) 위임하다","A good manager delegates tasks.","좋은 관리자는 업무를 위임한다."],
-["eligible","adj.","자격이 있는","Full-time staff are eligible for bonuses.","정규직 직원은 보너스 대상이다."],
-["enclose","v.","동봉하다","Please find the invoice enclosed.","동봉된 청구서를 확인해 주세요."],
-["estimate","n.","견적, 추정치","Can you give me a cost estimate?","비용 견적을 주실 수 있나요?"],
-["feasible","adj.","실현 가능한","Is the plan financially feasible?","그 계획은 재정적으로 실현 가능한가?"],
-["headquarters","n.","본사","Our headquarters is in Seoul.","우리 본사는 서울에 있다."],
-["implement","v.","시행하다, 실행하다","The new policy will be implemented soon.","새 정책이 곧 시행될 것이다."],
-["incentive","n.","장려책, 인센티브","Employees receive incentives for sales.","직원들은 판매 실적에 따라 인센티브를 받는다."],
-["invoice","n.","송장, 청구서","The invoice is due in 30 days.","청구서는 30일 이내 지불해야 한다."],
-["lucrative","adj.","수익성이 좋은","It was a lucrative deal.","수익성이 좋은 거래였다."],
-["merger","n.","합병","The merger was announced yesterday.","합병이 어제 발표되었다."],
-["objective","n.","목표, 목적","Our main objective is growth.","우리의 주요 목표는 성장이다."],
-["outstanding","adj.","미지불의; 뛰어난","Please pay the outstanding balance.","미지불 잔액을 납부해 주세요."],
-["personnel","n.","직원들, 인사과","Contact personnel for details.","자세한 사항은 인사과에 문의하세요."],
-["preliminary","adj.","예비의, 사전의","Preliminary results look good.","예비 결과가 좋아 보인다."],
-["procedure","n.","절차","Follow the standard procedure.","표준 절차를 따르세요."],
-["prospective","adj.","장래의, 유망한","We met with prospective clients.","잠재 고객들과 만났다."],
-["qualified","adj.","자격을 갖춘","She is highly qualified for the job.","그녀는 그 일에 충분한 자격이 있다."],
-["quarterly","adj.","분기별의","The quarterly report is ready.","분기 보고서가 준비되었다."],
-["receipt","n.","영수증; 수령","Keep the receipt for a refund.","환불을 위해 영수증을 보관하세요."],
-["recruit","v.","모집하다, 채용하다","We plan to recruit ten engineers.","엔지니어 10명을 채용할 계획이다."],
-["relocate","v.","이전하다","The office will relocate to Busan.","사무실이 부산으로 이전한다."],
-["revenue","n.","수익, 매출","Revenue increased by 12%.","매출이 12% 증가했다."],
-["shipment","n.","배송(품), 선적","The shipment arrived late.","배송품이 늦게 도착했다."],
-["souvenir","n.","기념품","He bought souvenirs at the airport.","그는 공항에서 기념품을 샀다."],
-["surplus","n.","잉여, 흑자","The company had a budget surplus.","회사에 예산 흑자가 났다."],
-["undergo","v.","겪다, (검사 등을) 받다","The system will undergo maintenance.","시스템이 점검을 받을 예정이다."],
-["upcoming","adj.","다가오는, 곧 있을","Prepare for the upcoming audit.","다가오는 감사에 대비하세요."],
-["valid","adj.","유효한","Your ticket is valid for one year.","티켓은 1년간 유효하다."],
-["waive","v.","(권리·요금을) 면제하다","The fee will be waived for members.","회원에게는 수수료가 면제된다."],
-["attire","n.","복장","Business attire is required.","비즈니스 복장이 요구된다."],
-["brochure","n.","안내 책자","Take a brochure at the front desk.","안내 데스크에서 책자를 가져가세요."],
-["courier","n.","택배 회사, 배달원","The documents were sent by courier.","서류는 택배로 보내졌다."],
-["diverse","adj.","다양한","We serve a diverse range of clients.","우리는 다양한 고객을 상대한다."],
-["acquire","v.","인수하다, 획득하다","The company acquired a small startup.","그 회사는 작은 스타트업을 인수했다."],
-["affordable","adj.","(가격이) 적당한","We offer affordable housing options.","우리는 적당한 가격의 주택을 제공한다."],
-["agenda","n.","안건, 의제","The budget is first on the agenda.","예산이 첫 번째 안건이다."],
-["alternative","n.","대안","We need an alternative to this plan.","이 계획의 대안이 필요하다."],
-["apparel","n.","의류","The store sells sports apparel.","그 가게는 스포츠 의류를 판다."],
-["appliance","n.","가전제품","Kitchen appliances are on sale.","주방 가전이 할인 중이다."],
-["approximately","adv.","대략","The trip takes approximately two hours.","이동은 대략 두 시간 걸린다."],
-["audit","n.","회계 감사","The annual audit starts next week.","연례 감사가 다음 주 시작된다."],
-["beverage","n.","음료","Beverages are served in the lobby.","음료는 로비에서 제공된다."],
-["cancellation","n.","취소","Cancellations must be made 24 hours in advance.","취소는 24시간 전에 해야 한다."],
-["capacity","n.","수용력, 용량","The factory is running at full capacity.","공장이 최대 가동 중이다."],
-["colleague","n.","동료","I had lunch with a colleague.","동료와 점심을 먹었다."],
-["complimentary","adj.","무료의","Guests receive a complimentary breakfast.","투숙객은 무료 조식을 받는다."],
-["contractor","n.","계약자, 도급업자","The contractor finished the roof early.","시공업자가 지붕 공사를 일찍 끝냈다."],
-["customize","v.","맞춤 제작하다","You can customize your order online.","온라인으로 주문을 맞춤 설정할 수 있다."],
-["dedicated","adj.","헌신적인, 전용의","She is a dedicated employee.","그녀는 헌신적인 직원이다."],
-["deposit","n.","보증금, 예금","A deposit is required to book the room.","객실 예약에 보증금이 필요하다."],
-["distribute","v.","배포하다, 유통하다","Please distribute the handouts.","유인물을 나눠 주세요."],
-["durable","adj.","내구성 있는","These boots are very durable.","이 부츠는 매우 튼튼하다."],
-["efficient","adj.","효율적인","The new system is more efficient.","새 시스템이 더 효율적이다."],
-["endorse","v.","지지하다, 보증하다","The athlete endorses our shoes.","그 선수가 우리 신발을 홍보한다."],
-["evaluate","v.","평가하다","Managers evaluate staff every year.","관리자들은 매년 직원을 평가한다."],
-["exceed","v.","초과하다, 능가하다","Sales exceeded our expectations.","매출이 기대를 넘어섰다."],
-["expire","v.","만료되다","My passport expires next month.","내 여권이 다음 달 만료된다."],
-["facilitate","v.","용이하게 하다","The software facilitates teamwork.","그 소프트웨어는 협업을 쉽게 해 준다."],
-["fluctuate","v.","변동하다","Fuel prices fluctuate daily.","연료 가격은 매일 변동한다."],
-["forward","v.","전달하다, 발송하다","I'll forward the email to you.","그 이메일을 전달해 드릴게요."],
-["inquiry","n.","문의","Thank you for your inquiry.","문의해 주셔서 감사합니다."],
-["installment","n.","할부(금), 1회분","You can pay in monthly installments.","월 할부로 지불할 수 있다."],
-["intermission","n.","(공연의) 중간 휴식","Drinks are sold during the intermission.","휴식 시간에 음료를 판매한다."],
-["merchandise","n.","상품","All merchandise is 20% off.","모든 상품이 20% 할인이다."],
-["notify","v.","통지하다, 알리다","We will notify you by email.","이메일로 알려 드리겠습니다."],
-["obtain","v.","얻다, 획득하다","You must obtain a permit first.","먼저 허가를 받아야 한다."],
-["occupancy","n.","(객실·건물) 사용률, 점유","Hotel occupancy rose this summer.","올여름 호텔 객실 점유율이 올랐다."],
-["patronage","n.","애용, 후원","Thank you for your continued patronage.","계속 이용해 주셔서 감사합니다."],
-["promote","v.","승진시키다; 홍보하다","He was promoted to manager.","그는 매니저로 승진했다."],
-["refund","n.","환불","You will receive a full refund.","전액 환불을 받게 된다."],
-["retain","v.","보유하다, 유지하다","Please retain a copy for your records.","기록용으로 사본을 보관하세요."],
-["on behalf of","prep.","~을 대신하여, 대표하여","I'm calling on behalf of Mr. Kim.","김 선생님을 대신해 전화드립니다."],
-["in advance","adv.","미리, 사전에","Please register in advance.","미리 등록해 주세요."]
-];
-const PER_DAY=50;
-const DAYS=Math.ceil(WORDS.length/PER_DAY);
-const dayOf=i=>Math.floor(i/PER_DAY)+1;
+// 일차는 words.js의 day 값으로 나눈다
+const DAYS=[...new Set(WORDS.map(w=>w.day))].sort((a,b)=>a-b);
+const dayOf=i=>WORDS[i].day;
 const dayRange=d=>WORDS.map((_,i)=>i).filter(i=>dayOf(i)===d);
 
 const KEY="toeic-omr-v1";
 let store={solved:0,correct:0,wrong:{}};
 try{const s=JSON.parse(localStorage.getItem(KEY)||"null"); if(s&&typeof s==="object") store=Object.assign(store,s);}catch(e){}
+// 단어 목록에 더 이상 없는 오답 기록은 정리한다
+for(const k of Object.keys(store.wrong)) if(!WORDS.some(w=>w.w===k)) delete store.wrong[k];
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(store))}catch(e){}};
 
 const $=id=>document.getElementById(id);
@@ -280,10 +181,10 @@ const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(M
 
 let view="quiz", day=0, hideMeaning=false;
 try{const u=JSON.parse(localStorage.getItem(KEY+"-ui")||"null"); if(u){view=u.view||view; day=u.day??day; hideMeaning=!!u.hide}}catch(e){}
-if(day>DAYS) day=0;
+if(day&&!DAYS.includes(day)) day=0;
 const saveUi=()=>{try{localStorage.setItem(KEY+"-ui",JSON.stringify({view,day,hide:hideMeaning}))}catch(e){}};
 const inScope=i=>day===0||dayOf(i)===day;
-const wrongInScope=()=>Object.keys(store.wrong).map(k=>WORDS.findIndex(w=>w[0]===k)).filter(i=>i>=0&&inScope(i));
+const wrongInScope=()=>Object.keys(store.wrong).map(k=>WORDS.findIndex(w=>w.w===k)).filter(i=>i>=0&&inScope(i));
 
 function renderStats(){
   $("sSolved").textContent=store.solved;
@@ -297,8 +198,8 @@ function renderStats(){
 }
 
 function renderDays(){
-  const list=(view==="quiz"?[0]:[]).concat(Array.from({length:DAYS},(_,i)=>i+1));
-  if(view==="book"&&day===0) day=1;
+  const list=(view==="quiz"?[0]:[]).concat(DAYS);
+  if(view==="book"&&day===0) day=DAYS[0];
   $("days").innerHTML=list.map(d=>{
     const cnt=d===0?WORDS.length:dayRange(d).length;
     return `<button class="chip" data-d="${d}" aria-pressed="${d===day}">${d===0?"전체":d+"일차"}<small>${cnt}</small></button>`;
@@ -311,17 +212,17 @@ function renderDays(){
 
 function renderBook(){
   const idx=dayRange(day);
-  const wrongN=idx.filter(i=>store.wrong[WORDS[i][0]]).length;
+  const wrongN=idx.filter(i=>store.wrong[WORDS[i].w]).length;
   $("bookTitle").textContent=`${day}일차 단어장`;
   $("bookMeta").textContent=`${idx.length}단어 · 오답노트에 있는 단어 ${wrongN}개`;
   $("hideToggle").checked=hideMeaning;
   $("book").classList.toggle("hide-meaning",hideMeaning);
   $("book").innerHTML=idx.map((i,n)=>{
-    const w=WORDS[i], miss=store.wrong[w[0]];
+    const w=WORDS[i], miss=store.wrong[w.w];
     return `<li class="entry"><span class="no">${String(n+1).padStart(2,"0")}</span>
-      <div class="top"><span class="w">${w[0]}</span><span class="pos">${w[1]}</span>${miss?`<span class="tag">오답 ${miss}</span>`:""}</div>
-      <button class="meaning" tabindex="${hideMeaning?0:-1}">${w[2]}</button>
-      <span class="ex">${w[3]}</span></li>`;
+      <div class="top"><span class="w">${w.w}</span><span class="pos">${w.pos}</span>${miss?`<span class="tag">오답 ${miss}</span>`:""}</div>
+      <button class="meaning" tabindex="${hideMeaning?0:-1}">${w.ko}</button>
+      <span class="ex">${w.ex}</span></li>`;
   }).join("");
   $("book").querySelectorAll(".meaning").forEach(b=>b.addEventListener("click",()=>{if(hideMeaning)b.classList.toggle("shown")}));
 }
@@ -339,8 +240,8 @@ function setView(v){
 function makeQuestion(idx){
   const w=WORDS[idx];
   // 같은 품사 오답을 우선 섞어 난이도를 올린다
-  const same=shuffle(WORDS.map((x,i)=>i).filter(i=>i!==idx&&WORDS[i][1]===w[1]));
-  const other=shuffle(WORDS.map((x,i)=>i).filter(i=>i!==idx&&WORDS[i][1]!==w[1]));
+  const same=shuffle(WORDS.map((x,i)=>i).filter(i=>i!==idx&&WORDS[i].pos===w.pos));
+  const other=shuffle(WORDS.map((x,i)=>i).filter(i=>i!==idx&&WORDS[i].pos!==w.pos));
   const distract=same.concat(other).slice(0,3);
   const opts=shuffle([idx,...distract]);
   return {idx,opts,answer:opts.indexOf(idx)};
@@ -361,8 +262,8 @@ function renderQ(){
   sheet.innerHTML=`
     <div class="qhead"><span>${round.day?round.day+"일차 · ":"전체 · "}${round.review?"오답 복습":"실전 연습"}</span><span class="mono">${round.i+1} / ${round.qs.length}</span></div>
     <div class="progress"><i style="width:${round.i/round.qs.length*100}%"></i></div>
-    <p class="word">${w[0]}<span class="pos">${w[1]}</span></p>
-    <ul class="choices">${q.opts.map((o,k)=>`<li><button class="choice" data-k="${k}"><span class="bubble">${LETTERS[k]}</span><span>${WORDS[o][2]}</span></button></li>`).join("")}</ul>
+    <p class="word">${w.w}<span class="pos">${w.pos}</span></p>
+    <ul class="choices">${q.opts.map((o,k)=>`<li><button class="choice" data-k="${k}"><span class="bubble">${LETTERS[k]}</span><span>${WORDS[o].ko}</span></button></li>`).join("")}</ul>
     <div id="fb"></div>
     <p class="hint">키보드 1–4 또는 A–D로 선택 · Enter로 다음</p>`;
   sheet.querySelectorAll(".choice").forEach(b=>b.addEventListener("click",()=>answer(+b.dataset.k)));
@@ -377,13 +278,13 @@ function answer(k){
   btns[q.answer].classList.add("correct");
   if(!ok) btns[k].classList.add("wrong");
   store.solved++;
-  if(ok){store.correct++;round.score++; if(round.review) delete store.wrong[w[0]];}
-  else{store.wrong[w[0]]=(store.wrong[w[0]]||0)+1; round.missed.push(q.idx);}
+  if(ok){store.correct++;round.score++; if(round.review) delete store.wrong[w.w];}
+  else{store.wrong[w.w]=(store.wrong[w.w]||0)+1; round.missed.push(q.idx);}
   save(); renderStats();
   const last=round.i===round.qs.length-1;
   $("fb").innerHTML=`<div class="feedback">
-      <span class="verdict ${ok?"ok":"no"}">${ok?"정답!":"오답 · 정답은 ("+LETTERS[q.answer]+") "+w[2]}</span>
-      <span class="ex">${w[3]}</span><span class="ex-ko">${w[4]}</span>
+      <span class="verdict ${ok?"ok":"no"}">${ok?"정답!":"오답 · 정답은 ("+LETTERS[q.answer]+") "+w.ko}</span>
+      <span class="ex">${w.ex}</span><span class="ex-ko">${w.exKo}</span>
       <div class="row"><span class="hint">${!ok?"오답노트에 추가됨":round.review?"오답노트에서 삭제됨":""}</span>
       <button class="btn primary" id="next">${last?"결과 보기":"다음 문제"}</button></div></div>`;
   $("next").addEventListener("click",next);
@@ -400,7 +301,7 @@ function renderResult(){
   sheet.innerHTML=`<div class="result">
     <span class="hint">${r.review?"오답 복습":"실전 연습"} 결과</span>
     <div class="score">${r.score}<span style="font-size:28px;color:var(--muted)"> / ${r.qs.length}</span></div>
-    ${r.missed.length?`<div class="missed"><span class="hint">이번에 틀린 단어</span>${r.missed.map(i=>`<div><span class="mono">${WORDS[i][0]}</span><span>${WORDS[i][2]}</span></div>`).join("")}</div>`:`<p>전부 맞혔어요.</p>`}
+    ${r.missed.length?`<div class="missed"><span class="hint">이번에 틀린 단어</span>${r.missed.map(i=>`<div><span class="mono">${WORDS[i].w}</span><span>${WORDS[i].ko}</span></div>`).join("")}</div>`:`<p>전부 맞혔어요.</p>`}
     <div class="modes" style="justify-content:center">
       <button class="btn primary" id="again">${day?day+"일차 ":"새 "}10문제</button>
       ${wrongInScope().length?`<button class="btn" id="rev">오답만 복습</button>`:""}
