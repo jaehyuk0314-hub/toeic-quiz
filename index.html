@@ -114,10 +114,11 @@ h1 span{color:var(--omr)}
 .hide-meaning .meaning{color:transparent;background:var(--omr-soft);border-radius:3px;cursor:pointer;min-width:6em;user-select:none}
 .hide-meaning .meaning.shown{color:var(--ink);background:none}
 .entry .ex{font-size:13px}
-.speak{flex:none;display:inline-grid;place-items:center;width:30px;height:30px;padding:0;margin-left:8px;border:1.5px solid var(--omr);border-radius:50%;background:transparent;color:var(--omr);cursor:pointer;vertical-align:middle}
+.speak{position:relative;flex:none;display:inline-grid;place-items:center;width:30px;height:30px;padding:0;margin-left:8px;border:1.5px solid var(--omr);border-radius:50%;background:transparent;color:var(--omr);cursor:pointer;vertical-align:middle}
 .speak:hover,.speak.on{background:var(--omr);color:#fff}
 .speak:focus-visible{outline:3px solid var(--omr);outline-offset:2px}
 .speak svg{width:16px;height:16px}
+.speak::after{content:"";position:absolute;inset:-8px}
 .entry .speak{width:26px;height:26px;margin-left:0;align-self:center}
 .entry .speak svg{width:14px;height:14px}
 .no-tts #autoSpeakLabel{display:none}
@@ -224,29 +225,35 @@ function pickVoice(){
   const vs=speechSynthesis.getVoices().filter(v=>v.lang.replace("_","-").toLowerCase()==="en-us"&&voiceScore(v)>0);
   usVoice=vs.sort((a,b)=>voiceScore(b)-voiceScore(a))[0]||null;
 }
-if(TTS){pickVoice(); speechSynthesis.addEventListener?.("voiceschanged",pickVoice)}
+if(TTS){pickVoice(); if(speechSynthesis.addEventListener) speechSynthesis.addEventListener("voiceschanged",pickVoice); else speechSynthesis.onvoiceschanged=pickVoice}
 // 모바일 대응
 // - iOS는 첫 발음이 반드시 사용자 터치 안에서 시작돼야 하므로 첫 터치 때 무음 발음으로 음성을 깨워 둔다
 // - cancel() 직후 바로 speak()하면 iOS·안드로이드 크롬에서 발음이 씹히므로, 읽는 중일 때만 멈추고 잠깐 뒤에 읽는다
 // - 고른 목소리가 기기에서 실제로 안 나오면(시작 신호가 안 오면) 목소리 지정 없이 한 번 더 읽는다
 // - 발음 객체를 전역에 잡아 두지 않으면 크롬이 읽는 도중 정리해 버려 소리가 끊긴다
-let unlocked=false, current=null, voiceBroken=false, iosTipShown=false;
+// - 다음 문제로 넘어가면 기다리던 발음·재시도 타이머가 이전 단어를 읽지 않도록 speakId로 무효화한다
+let unlocked=false, current=null, voiceBroken=false, iosTipShown=false, speakId=0, cancelledAt=0;
+const cancelSpeech=()=>{speechSynthesis.cancel(); cancelledAt=Date.now()};
+// 멈춘 지 80ms가 안 됐으면 그만큼 기다렸다 실행한다
+const afterCancel=fn=>{const wait=80-(Date.now()-cancelledAt); if(wait>0) setTimeout(fn,wait); else fn()};
 function unlock(){
   if(unlocked||!TTS) return;
   unlocked=true;
   const u=new SpeechSynthesisUtterance(" "); u.volume=0;
   speechSynthesis.speak(u);
 }
-if(TTS) ["touchend","pointerdown","keydown"].forEach(ev=>document.addEventListener(ev,unlock,{once:true,capture:true}));
-function speak(text,btn){
-  if(!TTS){toast("이 브라우저는 발음 기능을 지원하지 않아요. 카카오톡 같은 앱 안에서 열었다면 Safari나 Chrome으로 열어 주세요.");return}
-  if(IOS&&btn&&!iosTipShown){iosTipShown=true; toast("소리가 안 들리면 아이폰 무음 모드를 끄고 음량을 올려 주세요.")}
+if(TTS) ["touchend","click","keydown"].forEach(ev=>document.addEventListener(ev,unlock,{once:true,capture:true}));
+function speak(text,btn,manual=false){
+  if(!TTS){if(manual) toast("이 브라우저는 발음 기능을 지원하지 않아요. 카카오톡 같은 앱 안에서 열었다면 Safari나 Chrome으로 열어 주세요.");return}
+  if(IOS&&manual&&!iosTipShown){iosTipShown=true; toast("소리가 안 들리면 아이폰 무음 모드를 끄고 음량을 올려 주세요.")}
   document.querySelectorAll(".speak.on").forEach(b=>b.classList.remove("on"));
+  const id=++speakId;
   if(!usVoice&&!voiceBroken) pickVoice();
   // 첫 터치 때 깨우려고 넣은 무음 발음은 끊지 않고 뒤에 이어 읽는다
   const busy=current!==null&&(speechSynthesis.speaking||speechSynthesis.pending);
-  if(busy) speechSynthesis.cancel();
+  if(busy) cancelSpeech();
   const say=useVoice=>{
+    if(id!==speakId) return;
     const u=new SpeechSynthesisUtterance(text);
     u.lang="en-US"; u.rate=.9;
     if(useVoice&&usVoice) u.voice=usVoice;
@@ -254,7 +261,8 @@ function speak(text,btn){
     u.onstart=()=>{started=true};
     u.onend=()=>{btn?.classList.remove("on"); if(current===u) current=null};
     u.onerror=e=>{
-      btn?.classList.remove("on");
+      btn?.classList.remove("on"); if(current===u) current=null;
+      if(!manual) return;
       if(e.error==="not-allowed") toast("화면을 한 번 누른 뒤 스피커 버튼을 다시 눌러 주세요.");
       else if(e.error!=="interrupted"&&e.error!=="canceled") toast("발음을 재생하지 못했어요. 기기 음량과 무음 모드를 확인해 주세요.");
     };
@@ -262,16 +270,21 @@ function speak(text,btn){
     speechSynthesis.resume();
     speechSynthesis.speak(u);
     if(useVoice&&u.voice) setTimeout(()=>{
-      if(!started&&current===u){voiceBroken=true; usVoice=null; speechSynthesis.cancel(); say(false)}
+      if(!started&&current===u&&id===speakId){voiceBroken=true; usVoice=null; cancelSpeech(); afterCancel(()=>say(false))}
     },2500);
   };
-  if(busy) setTimeout(()=>say(!voiceBroken),80); else say(!voiceBroken);
+  afterCancel(()=>say(!voiceBroken));
 }
-const stopSpeak=()=>{if(TTS&&(speechSynthesis.speaking||speechSynthesis.pending)) speechSynthesis.cancel()};
+function stopSpeak(){
+  if(!TTS) return;
+  speakId++; current=null;
+  document.querySelectorAll(".speak.on").forEach(b=>b.classList.remove("on"));
+  if(speechSynthesis.speaking||speechSynthesis.pending) cancelSpeech();
+}
 const SPEAKER=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>`;
 const speakBtn=w=>`<button class="speak" type="button" data-say="${w}" aria-label="${w} 발음 듣기" title="발음 듣기">${SPEAKER}</button>`;
 // 스피커 버튼은 화면을 다시 그릴 때마다 새로 생기므로 문서 전체에서 한 번만 받는다
-document.addEventListener("click",e=>{const b=e.target.closest(".speak"); if(b) speak(b.dataset.say,b)});
+document.addEventListener("click",e=>{const b=e.target.closest(".speak"); if(b) speak(b.dataset.say,b,true)});
 const inScope=i=>day===0||dayOf(i)===day;
 const wrongInScope=()=>Object.keys(store.wrong).map(k=>WORDS.findIndex(w=>w.w===k)).filter(i=>i>=0&&inScope(i));
 
