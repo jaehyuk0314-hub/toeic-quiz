@@ -201,9 +201,20 @@ const saveUi=()=>{try{localStorage.setItem(KEY+"-ui",JSON.stringify({view,day,hi
 const TTS="speechSynthesis" in window&&"SpeechSynthesisUtterance" in window;
 if(!TTS) document.documentElement.classList.add("no-tts");
 let usVoice=null;
+// 맥에는 Albert·Zarvox 같은 효과음·로봇 목소리가 en-US로 잔뜩 깔려 있어서, 자연스러운 목소리를 이름으로 골라 점수를 매긴다
+const NOVELTY=/^(Albert|Bad News|Bahh|Bells|Boing|Bubbles|Cellos|Wobble|Fred|Good News|Jester|Junior|Kathy|Organ|Pipe Organ|Superstar|Ralph|Trinoids|Whisper|Zarvox|Deranged|Hysterical|Eddy|Flo|Grandma|Grandpa|Reed|Rocko|Sandy|Shelley)\b/i;
+const GOOD=/^(Samantha|Alex|Ava|Allison|Susan|Tom|Zoe|Nicky|Evan|Joelle|Nathan|Noelle|Aaron)\b|Microsoft (Aria|Jenny|Guy|Ana|Michelle|Christopher|Eric|Roger|Steffan)/i;
+function voiceScore(v){
+  const id=v.name+" "+v.voiceURI;
+  if(NOVELTY.test(v.name)) return 0;
+  if(/premium|enhanced|natural|neural/i.test(id)) return 5;
+  if(/^Google US English/i.test(v.name)) return 4;
+  if(GOOD.test(v.name)) return 3;
+  return 1;
+}
 function pickVoice(){
-  const vs=speechSynthesis.getVoices().filter(v=>v.lang.replace("_","-").toLowerCase()==="en-us");
-  usVoice=vs.find(v=>v.localService&&v.default)||vs.find(v=>v.localService)||vs[0]||null;
+  const vs=speechSynthesis.getVoices().filter(v=>v.lang.replace("_","-").toLowerCase()==="en-us"&&voiceScore(v)>0);
+  usVoice=vs.sort((a,b)=>voiceScore(b)-voiceScore(a))[0]||null;
 }
 if(TTS){pickVoice(); speechSynthesis.addEventListener?.("voiceschanged",pickVoice)}
 function speak(text,btn){
