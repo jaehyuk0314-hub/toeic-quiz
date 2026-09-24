@@ -22,5 +22,6 @@
 ## 구조 메모
 
 - 단어 데이터: `words.js`의 `WORDS` 배열. `index.html`이 `<script src="words.js">`로 불러온다. 각 항목은 `{ day, w, pos, ko, ex, exKo }` (일차, 단어, 품사, 뜻, 영어 예문, 예문 해석). 오답노트가 단어(`w`)를 키로 쓰므로 단어는 중복되지 않게 한다.
-- 기록 저장: `localStorage`의 `toeic-omr-v1`(학습 기록), `toeic-omr-v1-ui`(탭·일차·뜻 가리기). 저장 형식을 바꾸면 기존 기록이 깨지지 않게 한다.
+- 화면 이동: 왼쪽 목차 + 주소 해시(`#today`, `#book-N`, `#quiz`, `#wrong`, `#settings`). 모르는 해시는 `#today`로 바꾼다. 900px 미만에서는 목차가 ☰ 드로어가 된다.
+- 기록 저장: `localStorage`의 `toeic-omr-v1`(학습 기록), `toeic-omr-v1-ui`(`view` 마지막 화면, `day` 퀴즈 범위(0=전체), `hide` 뜻 가리기, `autoSpeak` 자동 발음). 저장 형식을 바꾸면 기존 기록이 깨지지 않게 한다.
 - 폰에서도 보기 좋아야 한다(좌우 여백 16px, 좁은 화면에서 줄바꿈).
