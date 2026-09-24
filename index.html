@@ -274,7 +274,8 @@ html.has-nextbar .toast{bottom:calc(92px + env(safe-area-inset-bottom,0px))}
   <p class="note">단어 <span class="mono" id="total"></span>개 수록 · 기록은 이 브라우저에만 저장돼요</p>
 </div>
 
-<script src="words.js"></script>
+<!-- words.js를 바꾸면 v 값을 올린다. 안 올리면 브라우저가 예전 단어 파일을 캐시에서 계속 쓴다 -->
+<script src="words.js?v=3"></script>
 <script>
 // 일차는 words.js의 day 값으로 나눈다
 const DAYS=[...new Set(WORDS.map(w=>w.day))].sort((a,b)=>a-b);
