@@ -330,8 +330,9 @@ function voiceScore(v){
   const id=v.name+" "+v.voiceURI;
   if(NOVELTY.test(v.name)) return 0;
   if(/premium|enhanced|natural|neural/i.test(id)) return 5;
-  if(/^Google US English/i.test(v.name)) return 4;
-  if(GOOD.test(v.name)) return 3;
+  if(GOOD.test(v.name)) return 4;
+  // 크롬의 Google 목소리는 인터넷으로 받아오는 방식이라, 실패하면 "읽는 중"으로 멈춘 채 소리가 안 난다. 기기 내장 목소리를 먼저 쓴다
+  if(/^Google US English/i.test(v.name)) return 3;
   return 1;
 }
 // 기기에서 실제로 소리가 안 난 목소리. 목소리를 비워 두면 크롬이 로봇 목소리를 고를 수 있어서, 다음으로 좋은 목소리로 넘어간다
