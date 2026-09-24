@@ -103,6 +103,9 @@ h1 span{color:var(--omr)}
 .side .sub-list a{min-height:40px;padding-left:24px;font-size:14px}
 .side small{color:var(--muted);font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:500}
 .side a[aria-current="page"] small{color:var(--omr)}
+.side .done{display:inline-grid;place-items:center;width:16px;height:16px;margin-left:4px;border-radius:50%;background:var(--good);color:#fff;vertical-align:-3px}
+.side .done svg{width:10px;height:10px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .menu-btn{display:none;flex:none;width:44px;height:44px;padding:0;place-items:center;border:1.5px solid var(--ink);border-radius:6px;background:transparent;color:var(--ink);cursor:pointer}
 .menu-btn:focus-visible{outline:3px solid var(--omr);outline-offset:2px}
 .menu-btn svg{width:20px;height:20px}
@@ -228,13 +231,28 @@ const dayOf=i=>WORDS[i].day;
 const dayRange=d=>WORDS.map((_,i)=>i).filter(i=>dayOf(i)===d);
 
 const KEY="toeic-omr-v1";
-let store={solved:0,correct:0,wrong:{}};
+// days: 일차별 기록 { "1": { best, last, count, lastDate, seen } }. 예전 기록에는 없으므로 빈 값으로 시작한다
+let store={solved:0,correct:0,wrong:{},days:{}};
 try{const s=JSON.parse(localStorage.getItem(KEY)||"null"); if(s&&typeof s==="object") store=Object.assign(store,s);}catch(e){}
+if(!store.days||typeof store.days!=="object") store.days={};
 // 단어 목록에 더 이상 없는 오답 기록은 정리한다
 for(const k of Object.keys(store.wrong)) if(!WORDS.some(w=>w.w===k)) delete store.wrong[k];
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(store))}catch(e){}};
 
 const $=id=>document.getElementById(id);
+
+// 일차 기록
+const todayKST=()=>new Date().toLocaleDateString("sv-SE",{timeZone:"Asia/Seoul"}); // YYYY-MM-DD
+const dayRec=d=>store.days[d]||(store.days[d]={});
+const dayTotal=d=>Math.min(ROUND,dayRange(d).length);
+// 20문제 중 18점 이상(90%)이면 완료
+const isDone=d=>{const r=store.days[d]; return !!r&&r.best!=null&&r.best>=Math.ceil(dayTotal(d)*0.9)};
+function recordDayQuiz(d,score){
+  const r=dayRec(d);
+  r.best=Math.max(r.best??0,score); r.last=score; r.count=(r.count||0)+1; r.lastDate=todayKST();
+  save();
+}
+function markSeen(d){const r=dayRec(d); if(!r.seen){r.seen=true; save()}}
 const sheet=$("sheet");
 const LETTERS=["A","B","C","D"];
 let round=null;
@@ -350,7 +368,12 @@ function renderStats(){
 }
 
 function renderNav(){
-  $("bookNav").innerHTML=DAYS.map(d=>`<li><a href="#book-${d}">${d}일차<small>${dayRange(d).length}</small></a></li>`).join("");
+  const CHECK=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>`;
+  $("bookNav").innerHTML=DAYS.map(d=>{
+    const r=store.days[d], score=r&&r.best!=null?`<small title="최고 점수"><span class="sr">최고 </span>${r.best}/${dayTotal(d)}${isDone(d)?`<span class="done">${CHECK}<span class="sr"> 완료</span></span>`:""}</small>`:"";
+    return `<li><a href="#book-${d}">${d}일차${score}</a></li>`;
+  }).join("");
+  markCurrent();
   $("scope").innerHTML=[0,...DAYS].map(d=>`<option value="${d}">${d?d+"일차":"전체"}</option>`).join("");
 }
 
@@ -382,6 +405,10 @@ function parseHash(){
   if(h in TITLES) return {route:h};
   return null;
 }
+function markCurrent(){
+  const here="#"+(view==="book"?"book-"+bookDay:view);
+  document.querySelectorAll("#side a").forEach(a=>a.getAttribute("href")===here?a.setAttribute("aria-current","page"):a.removeAttribute("aria-current"));
+}
 function onRoute(){
   let r=parseHash();
   // 알 수 없는 주소는 기록을 남기지 않고 #today로 바꾼다
@@ -389,11 +416,10 @@ function onRoute(){
   view=r.route; if(r.bookDay) bookDay=r.bookDay;
   saveUi(); stopSpeak(); closeDrawer(false);
   for(const [k,id] of Object.entries(PANELS)) $(id).hidden=k!==view;
-  const here="#"+(view==="book"?"book-"+bookDay:view);
-  document.querySelectorAll("#side a").forEach(a=>a.getAttribute("href")===here?a.setAttribute("aria-current","page"):a.removeAttribute("aria-current"));
+  markCurrent();
   document.title=(view==="book"?bookDay+"일차 단어장":TITLES[view])+" · 토익 단어 OMR";
   renderStats();
-  if(view==="book") renderBook(); else if(view==="quiz"&&!round) start(false);
+  if(view==="book"){markSeen(bookDay); renderBook()} else if(view==="quiz"&&!round) start(false);
   window.scrollTo(0,0);
 }
 
@@ -511,9 +537,14 @@ function next(){
 function renderResult(){
   const r=round;
   stopSpeak();
+  // 일차 기록에는 일차 퀴즈만 넣는다. 전체 랜덤·오답 복습은 제외
+  const dayQuiz=r.day&&!r.review;
+  if(dayQuiz){recordDayQuiz(r.day,r.score); renderNav()}
+  const rec=dayQuiz&&store.days[r.day];
   sheet.innerHTML=`<div class="result">
     <span class="hint">${r.review?"오답 복습":"실전 연습"} 결과</span>
     <div class="score">${r.score}<span style="font-size:28px;color:var(--muted)"> / ${r.qs.length}</span></div>
+    ${rec?`<span class="hint">${r.day}일차 최고 <span class="mono">${rec.best}/${dayTotal(r.day)}</span> · ${rec.count}번째 풀이${isDone(r.day)?" · 완료":""}</span>`:""}
     ${r.missed.length?`<div class="missed"><span class="hint">이번에 틀린 단어</span>${r.missed.map(i=>`<div><span class="mono">${WORDS[i].w}</span><span>${WORDS[i].ko}</span></div>`).join("")}</div>`:`<p>전부 맞혔어요.</p>`}
     <div class="modes" style="justify-content:center">
       <button class="btn primary" id="again">${day?day+"일차 ":"새 "}20문제</button>
@@ -529,7 +560,7 @@ $("btnNew").addEventListener("click",()=>start(false));
 $("btnReview").addEventListener("click",()=>start(true));
 $("btnReset").addEventListener("click",e=>{
   if(!resetArmed){resetArmed=true;e.target.textContent="한 번 더 누르면 초기화";setTimeout(()=>{resetArmed=false;e.target.textContent="기록 초기화"},3000);return}
-  store={solved:0,correct:0,wrong:{}};save();renderStats();resetArmed=false;e.target.textContent="기록 초기화";start(false);
+  store={solved:0,correct:0,wrong:{},days:{}};save();renderStats();renderNav();resetArmed=false;e.target.textContent="기록 초기화";start(false);
 });
 $("scope").addEventListener("change",e=>{day=+e.target.value;saveUi();renderStats();start(false)});
 $("hideToggle").addEventListener("change",e=>{hideMeaning=e.target.checked;saveUi();renderBook()});
