@@ -602,17 +602,24 @@ const canBlank=i=>wordRe(WORDS[i].w).test(WORDS[i].ex);
 // 같은 품사를 앞에 두고 나머지를 뒤에 섞어 붙인다
 const byPos=(list,pos)=>shuffle(list.filter(i=>WORDS[i].pos===pos)).concat(shuffle(list.filter(i=>WORDS[i].pos!==pos)));
 
-// 뜻이 같은 단어(employ·hire = 고용하다)가 보기에 같이 나오면 정답이 둘이 되므로, 정답·다른 보기와 뜻이 겹치는 단어는 건너뛴다
+// 뜻이 같은 단어(employ·hire = 고용하다)가 보기에 같이 나오면 정답이 둘이 되므로, 정답·다른 보기와 뜻이 겹치는 단어는 건너뛴다.
+// 뜻은 쉼표·세미콜론·슬래시로 나눈 조각 단위로 비교한다: evaluation(평가)과 assessment(평가, 사정)는 "평가"가 겹친다
+const koParts=k=>k.replace(/\([^)]*\)/g,"").split(/[,;/]/).map(s=>s.trim().replace(/^~/,"")).filter(Boolean);
 function distinctKo(list,n,taken){
   const out=[];
-  for(const i of list){if(out.length>=n) break; if(!taken.has(WORDS[i].ko)){taken.add(WORDS[i].ko); out.push(i)}}
+  for(const i of list){
+    if(out.length>=n) break;
+    const parts=koParts(WORDS[i].ko);
+    if(parts.some(p=>taken.has(p))) continue;
+    parts.forEach(p=>taken.add(p)); out.push(i);
+  }
   return out;
 }
 
 function makeQuestion(idx){
   const w=WORDS[idx];
   // 같은 품사 오답을 우선 섞어 난이도를 올린다
-  const distract=distinctKo(byPos(WORDS.map((_,i)=>i).filter(i=>i!==idx),w.pos),3,new Set([w.ko]));
+  const distract=distinctKo(byPos(WORDS.map((_,i)=>i).filter(i=>i!==idx),w.pos),3,new Set(koParts(w.ko)));
   const opts=shuffle([idx,...distract]);
   return {type:"meaning",idx,opts,answer:opts.indexOf(idx)};
 }
@@ -621,7 +628,7 @@ function makeBlank(idx){
   const w=WORDS[idx];
   const all=WORDS.map((_,i)=>i).filter(i=>i!==idx);
   // 같은 일차 단어만 보기에 나오지 않게 다른 일차 단어를 2개 먼저 넣는다. 다른 일차가 없으면 전체에서 채운다
-  const taken=new Set([w.ko]);
+  const taken=new Set(koParts(w.ko));
   const fromOther=distinctKo(byPos(all.filter(i=>WORDS[i].day!==w.day),w.pos),2,taken);
   const distract=fromOther.concat(distinctKo(byPos(all.filter(i=>!fromOther.includes(i)),w.pos),3-fromOther.length,taken));
   const opts=shuffle([idx,...distract]);
