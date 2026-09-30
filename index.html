@@ -275,7 +275,7 @@ html.has-nextbar .toast{bottom:calc(92px + env(safe-area-inset-bottom,0px))}
 </div>
 
 <!-- words.js를 바꾸면 v 값을 올린다. 안 올리면 브라우저가 예전 단어 파일을 캐시에서 계속 쓴다 -->
-<script src="words.js?v=3"></script>
+<script src="words.js?v=4"></script>
 <script>
 // 일차는 words.js의 day 값으로 나눈다
 const DAYS=[...new Set(WORDS.map(w=>w.day))].sort((a,b)=>a-b);
@@ -328,6 +328,14 @@ function todayPlan(){
   const n=dayNumberOn(s);
   return {date:s,sunday:false,day:DAYS.includes(n)?n:last};
 }
+// 오늘까지 열린 일차(일요일은 전날 기준). words.js에 미래 일차가 미리 들어 있어도 목차·퀴즈 범위·"전체" 퀴즈에는 나오지 않는다
+let openMemo=null;
+function openDays(){
+  const s=todayDate();
+  if(!openMemo||openMemo.s!==s){const n=dayNumberOn(s), o=DAYS.filter(d=>d<=n); openMemo={s,days:o.length?o:[DAYS[0]]}}
+  return openMemo.days;
+}
+const isOpen=d=>openDays().includes(d);
 const sheet=$("sheet");
 const LETTERS=["A","B","C","D"];
 let round=null;
@@ -337,7 +345,7 @@ const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(M
 // day: 퀴즈 범위(0=전체). 단어장 일차는 주소(#book-N)로 정한다
 let view="today", day=0, hideMeaning=false, autoSpeak=false, autoNext=true;
 try{const u=JSON.parse(localStorage.getItem(KEY+"-ui")||"null"); if(u){view=u.view||view; day=u.day??day; hideMeaning=!!u.hide; autoSpeak=!!u.autoSpeak; autoNext=u.autoNext!==false}}catch(e){}
-if(day&&!DAYS.includes(day)) day=0;
+if(day&&!isOpen(day)) day=0;
 const saveUi=()=>{try{localStorage.setItem(KEY+"-ui",JSON.stringify({view,day,hide:hideMeaning,autoSpeak,autoNext}))}catch(e){}};
 
 // 발음 듣기: 브라우저 내장 음성으로 미국식 영어를 읽는다
@@ -431,7 +439,7 @@ const SPEAKER=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke
 const speakBtn=w=>`<button class="speak" type="button" data-say="${w}" aria-label="${w} 발음 듣기" title="발음 듣기">${SPEAKER}</button>`;
 // 스피커 버튼은 화면을 다시 그릴 때마다 새로 생기므로 문서 전체에서 한 번만 받는다
 document.addEventListener("click",e=>{const b=e.target.closest(".speak"); if(b) speak(b.dataset.say,b,true)});
-const inScope=i=>day===0||dayOf(i)===day;
+const inScope=i=>day===0?isOpen(dayOf(i)):dayOf(i)===day;
 const wrongInScope=()=>Object.keys(store.wrong).map(k=>WORDS.findIndex(w=>w.w===k)).filter(i=>i>=0&&inScope(i));
 
 function renderStats(){
@@ -448,12 +456,12 @@ function renderStats(){
 
 function renderNav(){
   const CHECK=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>`;
-  $("bookNav").innerHTML=DAYS.map(d=>{
+  $("bookNav").innerHTML=openDays().map(d=>{
     const r=store.days[d], score=r&&r.best!=null?`<small title="최고 점수"><span class="sr">최고 </span>${r.best}/${dayTotal(d)}${isDone(d)?`<span class="done">${CHECK}<span class="sr"> 완료</span></span>`:""}</small>`:"";
     return `<li><a href="#book-${d}">${d}일차${score}</a></li>`;
   }).join("");
   markCurrent();
-  $("scope").innerHTML=[0,...DAYS].map(d=>`<option value="${d}">${d?d+"일차":"전체"}</option>`).join("");
+  $("scope").innerHTML=[0,...openDays()].map(d=>`<option value="${d}">${d?d+"일차":"전체"}</option>`).join("");
 }
 
 function renderBook(){
@@ -480,7 +488,7 @@ let bookDay=DAYS[0];
 function parseHash(){
   const h=decodeURIComponent(location.hash.slice(1));
   const m=/^book-(\d+)$/.exec(h);
-  if(m&&DAYS.includes(+m[1])) return {route:"book",bookDay:+m[1]};
+  if(m&&isOpen(+m[1])) return {route:"book",bookDay:+m[1]};
   if(h in TITLES) return {route:h};
   return null;
 }
