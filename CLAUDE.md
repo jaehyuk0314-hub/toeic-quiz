@@ -28,9 +28,15 @@
   - 4~30일차는 Claude가 주제별로 미리 만들어 둔 단어다(섹션 주석에 `단어·예문 Claude 작성`). 앱은 오늘까지 열린 일차(`openDays()`)만 목차·퀴즈 범위·"전체" 퀴즈에 보여 주므로, 미래 일차를 미리 넣어도 된다. 빈칸 오답 보기에는 전체 단어를 쓴다.
   - `words.js`를 바꾸면 `index.html`의 `<script src="words.js?v=N">`에서 N을 1 올린다. 안 올리면 GitHub Pages 캐시 때문에 브라우저가 예전 단어 파일을 계속 쓴다.
 
+## 공부 달력 (`#calendar`)
+
+- 기록·설정 화면 대신 둔 화면. 위는 월 달력(날짜 밑 OMR 버블: 남은 할 일 개수, 다 하면 초록 체크), 아래는 고른 날짜의 할 일(투두메이트 형식).
+- 할 일 묶음: **단어 퀴즈**(그날 퀴즈를 하나라도 끝내면 자동 체크, 1일차~오늘만 할 일로 셈), **LC**·**RC**(직접 적고 체크·삭제). 사용자가 적은 글은 `esc()`로 이스케이프한다.
+- 자동 발음·자동 넘김·기록 초기화는 퀴즈 화면에 있다.
+
 ## 구조 메모
 
 - 단어 데이터: `words.js`의 `WORDS` 배열. `index.html`이 `<script src="words.js">`로 불러온다. 각 항목은 `{ day, w, pos, ko, ex, exKo }` (일차, 단어, 품사, 뜻, 영어 예문, 예문 해석). 오답노트가 단어(`w`)를 키로 쓰므로 단어는 중복되지 않게 한다.
-- 화면 이동: 왼쪽 목차 + 주소 해시(`#today`, `#book-N`, `#quiz`, `#wrong`, `#settings`). 모르는 해시는 `#today`로 바꾼다. 900px 미만에서는 목차가 ☰ 드로어가 된다.
-- 기록 저장: `localStorage`의 `toeic-omr-v1`(학습 기록 `solved`·`correct`·`wrong`, 일차 기록 `days: { "N": { best, last, count, lastDate, seen } }` — 일차 퀴즈만 기록하고 전체 랜덤·오답 복습은 제외, 날짜는 한국 시간), `toeic-omr-v1-ui`(`view` 마지막 화면, `day` 퀴즈 범위(0=전체), `hide` 뜻 가리기, `autoSpeak` 자동 발음, `autoNext` 정답 자동 넘김), `toeic-omr-v1-quiz`(진행 중인 퀴즈. 첫 답 이후부터 저장, 단어는 문자열로 저장해서 words.js에서 못 찾으면 버림, 끝나면 삭제). 저장 형식을 바꾸면 기존 기록이 깨지지 않게 한다.
+- 화면 이동: 왼쪽 목차 + 주소 해시(`#today`, `#book-N`, `#quiz`, `#wrong`, `#calendar`). 예전 `#settings`는 `#calendar`로, 모르는 해시는 `#today`로 바꾼다. 900px 미만에서는 목차가 ☰ 드로어가 된다.
+- 기록 저장: `localStorage`의 `toeic-omr-v1`(학습 기록 `solved`·`correct`·`wrong`, 일차 기록 `days: { "N": { best, last, count, lastDate, seen } }` — 일차 퀴즈만 기록하고 전체 랜덤·오답 복습은 제외, 날짜는 한국 시간, `log: { "YYYY-MM-DD": [{ t, s, n }] }` 그날 끝낸 퀴즈 전부(종류 무관, 공부 달력 자동 체크용)), `toeic-omr-v1-ui`(`view` 마지막 화면, `day` 퀴즈 범위(0=전체), `hide` 뜻 가리기, `autoSpeak` 자동 발음, `autoNext` 정답 자동 넘김), `toeic-omr-v1-plan`(공부 달력 LC·RC 할 일 `todos: { "YYYY-MM-DD": [{ id, cat: "lc"|"rc", text, done }] }`. 기록 초기화로 지우지 않음), `toeic-omr-v1-quiz`(진행 중인 퀴즈. 첫 답 이후부터 저장, 단어는 문자열로 저장해서 words.js에서 못 찾으면 버림, 끝나면 삭제). 저장 형식을 바꾸면 기존 기록이 깨지지 않게 한다.
 - 폰에서도 보기 좋아야 한다(좌우 여백 16px, 좁은 화면에서 줄바꿈).

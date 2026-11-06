@@ -149,6 +149,51 @@ html.drawer-open,html.drawer-open body{overflow:hidden}
 .scope{display:inline-flex;align-items:center;gap:6px;font-size:13px}
 .scope select{font:inherit;font-weight:500;color:var(--ink);background:var(--sheet);border:1.5px solid var(--ink);border-radius:999px;padding:7px 12px;min-height:40px}
 .scope select:focus-visible{outline:3px solid var(--omr);outline-offset:2px}
+/* 공부 달력: 위는 월 달력, 아래는 고른 날짜의 할 일 */
+.cal-sheet{padding:18px 14px 14px;gap:12px}
+.cal-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 4px}
+.cal-head h2{font-family:"Do Hyeon",sans-serif;font-weight:400;font-size:26px;margin:0;line-height:1.2}
+.cal-nav{display:flex;align-items:center;gap:6px}
+.cal-nav .btn{padding:6px 12px;min-height:40px}
+.iconbtn{flex:none;width:40px;height:40px;padding:0;display:grid;place-items:center;border:1.5px solid var(--ink);border-radius:50%;background:transparent;color:var(--ink);cursor:pointer}
+.iconbtn:hover{background:var(--ink);color:var(--sheet)}
+.iconbtn:focus-visible,.day-cell:focus-visible,.check:focus-visible,.addbtn:focus-visible,.del:focus-visible{outline:3px solid var(--omr);outline-offset:2px}
+.iconbtn svg{width:18px;height:18px}
+.cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:2px}
+.cal .wd{text-align:center;font-size:12px;color:var(--muted);padding-bottom:2px}
+.cal .wd.sun{color:var(--omr)}
+.day-cell{font:inherit;color:var(--ink);background:none;border:1.5px solid transparent;border-radius:6px;padding:4px 0 6px;min-height:56px;width:100%;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer}
+.day-cell:hover{background:var(--omr-soft)}
+.day-cell[aria-pressed="true"]{border-color:var(--omr);background:var(--omr-soft)}
+.day-cell .n{width:24px;height:24px;display:grid;place-items:center;border-radius:50%;font-family:"IBM Plex Mono",monospace;font-size:13px;font-variant-numeric:tabular-nums}
+.day-cell.sun .n{color:var(--omr)}
+.day-cell.today .n{background:var(--omr);color:#fff}
+.mark{width:26px;height:16px;border:1.5px solid var(--line);border-radius:50%;display:grid;place-items:center;font-family:"IBM Plex Mono",monospace;font-size:10px;font-weight:600;line-height:1;color:var(--omr)}
+.mark.left{border-color:var(--omr)}
+.mark.all{background:var(--good);border-color:var(--good);color:#fff}
+.mark svg,.todo .bubble svg{width:11px;height:11px}
+.todo-group{display:flex;flex-direction:column;gap:6px}
+.todo-group+.todo-group{border-top:1px dashed var(--line);padding-top:14px}
+.todo-cat{display:flex;align-items:center;gap:8px}
+.chip{font-size:13px;font-weight:700;color:var(--omr);border:1.5px solid var(--omr);border-radius:999px;padding:1px 12px}
+.addbtn{width:28px;height:28px;padding:0;display:grid;place-items:center;border:1.5px solid var(--omr);border-radius:50%;background:transparent;color:var(--omr);cursor:pointer;position:relative}
+.addbtn:hover,.addbtn[aria-expanded="true"]{background:var(--omr);color:#fff}
+.addbtn svg{width:14px;height:14px}
+.addbtn::after,.del::after{content:"";position:absolute;inset:-8px}
+.todos{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.todo{display:flex;align-items:center;gap:10px;min-height:44px}
+.todo .txt{flex:1;min-width:0;word-break:break-word}
+.todo .txt small{display:block;color:var(--muted);font-size:12px}
+.todo.done>.txt>span:first-child,.todo.done>span.txt{color:var(--muted);text-decoration:line-through}
+.todo.done .bubble{background:var(--good);border-color:var(--good);color:#fff}
+.check{flex:none;padding:8px 4px;margin:-8px -4px;background:none;border:0;cursor:pointer;border-radius:6px}
+.del{flex:none;position:relative;width:28px;height:28px;padding:0;display:grid;place-items:center;border:0;border-radius:50%;background:none;color:var(--muted);cursor:pointer}
+.del:hover{color:var(--omr);background:var(--omr-soft)}
+.del svg{width:14px;height:14px}
+.todo-add{display:flex;gap:8px}
+.todo-add input{flex:1;min-width:0;font:inherit;color:var(--ink);background:var(--sheet);border:1.5px solid var(--line);border-radius:8px;padding:8px 12px;min-height:44px}
+.todo-add input:focus{outline:none;border-color:var(--omr)}
+.todo-empty{margin:0}
 @media (min-width:900px){
   body{padding-left:calc(240px + 16px)}
   .toast{left:calc(50% + 120px)}
@@ -214,7 +259,7 @@ html.has-nextbar .toast{bottom:calc(92px + env(safe-area-inset-bottom,0px))}
       <ul class="sub-list" id="bookNav" aria-labelledby="bookGroup"></ul></li>
     <li><a href="#quiz" data-route="quiz">퀴즈</a></li>
     <li><a href="#wrong" data-route="wrong">오답노트</a></li>
-    <li><a href="#settings" data-route="settings">기록·설정</a></li>
+    <li><a href="#calendar" data-route="calendar">공부 달력</a></li>
   </ul>
 </nav>
 <div class="scrim" id="scrim" hidden></div>
@@ -236,8 +281,19 @@ html.has-nextbar .toast{bottom:calc(92px + env(safe-area-inset-bottom,0px))}
     <div class="placeholder"><h2>오답노트</h2><p>준비 중이에요. 지금은 퀴즈 화면의 "오답만 복습"을 써 주세요.</p></div>
   </section>
 
-  <section class="panel" id="panelSettings" hidden>
-    <div class="placeholder"><h2>기록·설정</h2><p>준비 중이에요. 기록 초기화와 자동 발음은 지금은 퀴즈 화면에 있어요.</p></div>
+  <section class="panel" id="panelCalendar" hidden>
+    <div class="sheet cal-sheet">
+      <div class="cal-head">
+        <h2 id="calTitle" aria-live="polite"></h2>
+        <div class="cal-nav">
+          <button class="iconbtn" id="calPrev" type="button" aria-label="이전 달"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+          <button class="btn" id="calToday" type="button">오늘</button>
+          <button class="iconbtn" id="calNext" type="button" aria-label="다음 달"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+        </div>
+      </div>
+      <div class="cal" id="cal"></div>
+    </div>
+    <div class="sheet" id="todoBox" aria-live="polite"></div>
   </section>
 
   <section class="panel" id="panelBook" hidden>
@@ -287,6 +343,8 @@ const KEY="toeic-omr-v1";
 let store={solved:0,correct:0,wrong:{},days:{}};
 try{const s=JSON.parse(localStorage.getItem(KEY)||"null"); if(s&&typeof s==="object") store=Object.assign(store,s);}catch(e){}
 if(!store.days||typeof store.days!=="object") store.days={};
+// log: 날짜별로 끝낸 퀴즈 { "2026-11-06": [{ t: 이름, s: 점수, n: 문제 수 }] }. 공부 달력의 "단어 퀴즈" 자동 체크에 쓴다
+if(!store.log||typeof store.log!=="object") store.log={};
 // 단어 목록에 더 이상 없는 오답 기록은 정리한다
 for(const k of Object.keys(store.wrong)) if(!WORDS.some(w=>w.w===k)) delete store.wrong[k];
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(store))}catch(e){}};
@@ -454,8 +512,8 @@ function renderStats(){
   $("total").textContent=WORDS.length;
 }
 
+const CHECK=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>`;
 function renderNav(){
-  const CHECK=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>`;
   $("bookNav").innerHTML=openDays().map(d=>{
     const r=store.days[d], score=r&&r.best!=null?`<small title="최고 점수"><span class="sr">최고 </span>${r.best}/${dayTotal(d)}${isDone(d)?`<span class="done">${CHECK}<span class="sr"> 완료</span></span>`:""}</small>`:"";
     return `<li><a href="#book-${d}">${d}일차${score}</a></li>`;
@@ -482,13 +540,14 @@ function renderBook(){
 }
 
 // 화면 이동은 주소 해시로 한다. 새로고침·뒤로 가기에서도 같은 화면이 유지된다
-const PANELS={today:"panelToday",book:"panelBook",quiz:"panelQuiz",wrong:"panelWrong",settings:"panelSettings"};
-const TITLES={today:"오늘",quiz:"퀴즈",wrong:"오답노트",settings:"기록·설정"};
+const PANELS={today:"panelToday",book:"panelBook",quiz:"panelQuiz",wrong:"panelWrong",calendar:"panelCalendar"};
+const TITLES={today:"오늘",quiz:"퀴즈",wrong:"오답노트",calendar:"공부 달력"};
 let bookDay=DAYS[0];
 function parseHash(){
   const h=decodeURIComponent(location.hash.slice(1));
   const m=/^book-(\d+)$/.exec(h);
   if(m&&isOpen(+m[1])) return {route:"book",bookDay:+m[1]};
+  if(h==="settings"){history.replaceState(null,"","#calendar"); return {route:"calendar"}} // 예전 기록·설정 주소
   if(h in TITLES) return {route:h};
   return null;
 }
@@ -511,6 +570,7 @@ function onRoute(){
   renderStats();
   if(view==="book"){markSeen(bookDay); renderBook()}
   else if(view==="today") renderToday();
+  else if(view==="calendar"){calSel=calMonth=adding=null; renderCalendar()}
   else if(view==="quiz"){
     if(pendingStart){const f=pendingStart; pendingStart=null; f()}
     else if(!round){const s=loadQuiz(); if(s) showResumeCard(s,()=>start(false),false); else start(false)}
@@ -790,6 +850,7 @@ function renderResult(){
   stopSpeak(); clearQuiz();
   // 일차 기록에는 일차 퀴즈만 넣는다. 전체 랜덤·오답 복습·주간 총정리는 제외(주간·전체 오답은 day가 0)
   const dayQuiz=r.day&&!r.review;
+  logQuiz(quizTitle(r),r.score,r.qs.length);
   if(dayQuiz){recordDayQuiz(r.day,r.score); renderNav()}
   const rec=dayQuiz&&store.days[r.day];
   sheet.innerHTML=`<div class="result">
@@ -813,7 +874,7 @@ $("btnNew").addEventListener("click",()=>guardStart(()=>start(false)));
 $("btnReview").addEventListener("click",()=>guardStart(()=>start(true)));
 $("btnReset").addEventListener("click",e=>{
   if(!resetArmed){resetArmed=true;e.target.textContent="한 번 더 누르면 초기화";setTimeout(()=>{resetArmed=false;e.target.textContent="기록 초기화"},3000);return}
-  store={solved:0,correct:0,wrong:{},days:{}};save();clearQuiz();renderStats();renderNav();resetArmed=false;e.target.textContent="기록 초기화";start(false);
+  store={solved:0,correct:0,wrong:{},days:{},log:{}};save();clearQuiz();renderStats();renderNav();resetArmed=false;e.target.textContent="기록 초기화";start(false);
 });
 // 확인 화면에서 "이어서 풀기"를 고르면 범위 선택도 원래대로 돌아간다(renderStats가 되돌림)
 $("scope").addEventListener("change",e=>{const d=+e.target.value; renderStats(); guardStart(()=>{day=d;saveUi();renderStats();start(false)})});
@@ -832,6 +893,116 @@ document.addEventListener("keydown",e=>{
   if(!round.answered&&k!==undefined) answer(k);
   // 스피커 버튼에서 누른 Enter는 발음만 듣고 다음 문제로 넘어가지 않는다
   else if(round.answered&&e.key==="Enter"&&document.activeElement.id!=="next"&&!document.activeElement.closest?.(".speak")) next();
+});
+
+// ── 공부 달력 ──
+// 끝낸 퀴즈는 종류와 상관없이(일차·전체·오답 복습·총정리) 그날 날짜에 남긴다
+function logQuiz(t,sc,n){
+  const d=todayKST(), a=store.log[d]||(store.log[d]=[]);
+  a.push({t,s:sc,n}); if(a.length>10) a.splice(0,a.length-10);
+  save();
+}
+// 날짜 기록이 생기기 전에 푼 일차 퀴즈는 일차 기록의 마지막 날짜로 채운다
+for(const [d,r] of Object.entries(store.days)){
+  if(r&&r.lastDate&&r.last!=null&&!store.log[r.lastDate]) store.log[r.lastDate]=[{t:d+"일차 · 실전 연습",s:r.last,n:Math.min(ROUND,dayRange(+d).length)}];
+}
+// LC·RC 할 일은 퀴즈 기록과 따로 저장한다(기록 초기화에도 지워지지 않음): { todos: { "2026-11-06": [{ id, cat, text, done }] } }
+const PLAN_KEY=KEY+"-plan";
+let plan={todos:{}};
+try{const p=JSON.parse(localStorage.getItem(PLAN_KEY)||"null"); if(p&&p.todos&&typeof p.todos==="object") plan.todos=p.todos}catch(e){}
+const savePlan=()=>{try{localStorage.setItem(PLAN_KEY,JSON.stringify(plan))}catch(e){}};
+const CATS=[{id:"lc",name:"LC",ph:"예: LC 강의 3강 듣기"},{id:"rc",name:"RC",ph:"예: RC 파트5 30문제"}];
+const esc=t=>String(t).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const PLUS=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>`;
+const XMARK=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>`;
+const todosOn=s=>(plan.todos[s]||[]).filter(t=>CATS.some(c=>c.id===t.cat));
+// 단어 퀴즈는 1일차부터 오늘까지만 할 일로 센다(미래 날짜는 표시만)
+const quizDue=s=>s>=START_DATE&&s<=todayDate();
+const quizLog=s=>store.log[s]||[];
+function dayStatus(s){
+  const t=todosOn(s); let total=t.length, done=t.filter(x=>x.done).length;
+  if(quizDue(s)){total++; if(quizLog(s).length) done++}
+  return {total,done};
+}
+const dayFor=s=>{const n=dayNumberOn(s); return DAYS.includes(n)?n:DAYS[DAYS.length-1]};
+let calSel=null, calMonth=null, adding=null;
+function renderCalendar(focus){
+  const today=todayDate();
+  if(!calSel) calSel=today;
+  if(!calMonth) calMonth=calSel.slice(0,7);
+  const [y,m]=calMonth.split("-").map(Number);
+  $("calTitle").textContent=`${y}년 ${m}월`;
+  const first=new Date(Date.UTC(y,m-1,1)).getUTCDay(), len=new Date(Date.UTC(y,m,0)).getUTCDate();
+  let html=WEEK.map((w,i)=>`<span class="wd${i===0?" sun":""}" aria-hidden="true">${w}</span>`).join("")+"<span></span>".repeat(first);
+  for(let d=1;d<=len;d++){
+    const s=`${calMonth}-${String(d).padStart(2,"0")}`, st=dayStatus(s), left=st.total-st.done;
+    const mark=!st.total?`<span class="mark"></span>`:!left?`<span class="mark all">${CHECK}</span>`:`<span class="mark left">${left}</span>`;
+    const label=`${m}월 ${d}일 ${WEEK[weekday(s)]}요일${s===today?", 오늘":""}, ${st.total?`할 일 ${st.total}개 중 ${st.done}개 완료`:"할 일 없음"}`;
+    html+=`<button type="button" class="day-cell${s===today?" today":""}${weekday(s)===0?" sun":""}" data-date="${s}" aria-pressed="${s===calSel}" aria-label="${label}"><span class="n" aria-hidden="true">${d}</span>${mark}</button>`;
+  }
+  $("cal").innerHTML=html;
+  $("calToday").disabled=calSel===today&&calMonth===today.slice(0,7);
+  renderTodos();
+  if(focus) document.querySelector(focus)?.focus();
+}
+function renderTodos(){
+  const s=calSel, today=todayDate(), st=dayStatus(s), log=quizLog(s);
+  const tag=s<START_DATE?"":weekday(s)===0?"총정리":dayFor(s)+"일차";
+  let html=`<div class="qhead"><span>${fmtDate(s)}${tag?" · "+tag:""}</span><span class="mono">${st.total?`${st.done} / ${st.total}`:""}</span></div>`;
+  if(s>=START_DATE){
+    const done=log.length>0, last=log[log.length-1];
+    const sub=done?`${esc(last.t)} · <span class="mono">${last.s}/${last.n}</span>${log.length>1?` 외 ${log.length-1}번`:""}`
+      :s<today?"안 풀었어요":"퀴즈를 끝내면 자동으로 체크돼요";
+    html+=`<section class="todo-group" aria-label="단어 퀴즈"><div class="todo-cat"><span class="chip">단어 퀴즈</span></div>
+      <ul class="todos"><li class="todo${done?" done":""}"><span class="bubble">${done?CHECK:""}</span><span class="sr">${done?"완료":"미완료"}</span>
+        <div class="txt"><span>단어 퀴즈 응시</span><small>${sub}</small></div>${!done&&s===today?`<a class="linkbtn" href="#today">풀러 가기</a>`:""}</li></ul></section>`;
+  }
+  for(const c of CATS){
+    const items=todosOn(s).filter(t=>t.cat===c.id), open=adding===c.id;
+    html+=`<section class="todo-group" aria-label="${c.name}"><div class="todo-cat"><span class="chip">${c.name}</span>
+      <button type="button" class="addbtn" data-add="${c.id}" aria-label="${c.name} 할 일 추가" aria-expanded="${open}">${PLUS}</button></div>
+      ${items.length?`<ul class="todos">${items.map(t=>`<li class="todo${t.done?" done":""}">
+        <button type="button" class="check" data-id="${t.id}" aria-pressed="${!!t.done}" aria-label="${esc(t.text)} 완료"><span class="bubble">${t.done?CHECK:""}</span></button>
+        <span class="txt">${esc(t.text)}</span>
+        <button type="button" class="del" data-del="${t.id}" aria-label="${esc(t.text)} 삭제">${XMARK}</button></li>`).join("")}</ul>`:""}
+      ${open?`<form class="todo-add" data-cat="${c.id}"><input type="text" maxlength="60" placeholder="${c.ph}" aria-label="${c.name} 할 일" enterkeyhint="done" autocomplete="off"><button class="btn primary" type="submit">추가</button></form>`
+        :items.length?"":`<p class="hint todo-empty">+를 눌러 ${c.name} 공부를 적어 보세요</p>`}
+    </section>`;
+  }
+  $("todoBox").innerHTML=html;
+}
+function shiftMonth(k){
+  const [y,m]=calMonth.split("-").map(Number), t=new Date(Date.UTC(y,m-1+k,1));
+  calMonth=t.toISOString().slice(0,7); adding=null; renderCalendar();
+}
+$("calPrev").addEventListener("click",()=>shiftMonth(-1));
+$("calNext").addEventListener("click",()=>shiftMonth(1));
+$("calToday").addEventListener("click",()=>{calSel=todayDate(); calMonth=calSel.slice(0,7); adding=null; renderCalendar(`.day-cell[data-date="${calSel}"]`)});
+$("cal").addEventListener("click",e=>{
+  const b=e.target.closest(".day-cell"); if(!b) return;
+  calSel=b.dataset.date; adding=null; renderCalendar(`.day-cell[data-date="${calSel}"]`);
+});
+const findTodo=id=>(plan.todos[calSel]||[]).find(t=>t.id===id);
+$("todoBox").addEventListener("click",e=>{
+  const add=e.target.closest("[data-add]"), chk=e.target.closest(".check"), del=e.target.closest("[data-del]");
+  if(add){adding=adding===add.dataset.add?null:add.dataset.add; renderCalendar(adding?".todo-add input":`[data-add="${add.dataset.add}"]`)}
+  else if(chk){const t=findTodo(chk.dataset.id); if(t){t.done=!t.done; savePlan(); renderCalendar(`.check[data-id="${t.id}"]`)}}
+  else if(del){
+    const t=findTodo(del.dataset.del); if(!t) return;
+    plan.todos[calSel]=plan.todos[calSel].filter(x=>x!==t);
+    if(!plan.todos[calSel].length) delete plan.todos[calSel];
+    savePlan(); renderCalendar(`[data-add="${t.cat}"]`);
+  }
+});
+$("todoBox").addEventListener("submit",e=>{
+  e.preventDefault();
+  const f=e.target, text=f.querySelector("input").value.trim();
+  if(!text) return;
+  (plan.todos[calSel]||(plan.todos[calSel]=[])).push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),cat:f.dataset.cat,text,done:false});
+  savePlan(); renderCalendar(".todo-add input"); // 입력칸을 열어 둔 채로 이어서 적을 수 있다
+});
+$("todoBox").addEventListener("keydown",e=>{
+  if(e.key==="Escape"&&e.target.matches(".todo-add input")){const c=adding; adding=null; renderCalendar(`[data-add="${c}"]`)}
 });
 
 renderNav();
