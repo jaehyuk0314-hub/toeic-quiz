@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>토익 단어 OMR</title>
+<title>단어다넣어 · 토익 단어 하루 20문제</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=IBM+Plex+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
@@ -207,7 +207,7 @@ html.has-nextbar .toast{bottom:calc(92px + env(safe-area-inset-bottom,0px))}
 <body>
 
 <nav class="side" id="side" aria-label="목차">
-  <p class="side-title">토익 단어 <span>OMR</span></p>
+  <p class="side-title">단어<span>다넣어</span></p>
   <ul>
     <li><a href="#today" data-route="today">오늘</a></li>
     <li><span class="group" id="bookGroup">단어장</span>
@@ -223,8 +223,8 @@ html.has-nextbar .toast{bottom:calc(92px + env(safe-area-inset-bottom,0px))}
   <header>
     <button class="menu-btn" id="menuBtn" type="button" aria-label="목차 열기" aria-controls="side" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
     <div style="flex:1;min-width:0">
-      <h1>토익 단어 <span>OMR</span></h1>
-      <p class="sub">일차별 20문제 · 뜻 고르기 15 + 예문 빈칸 5 · 틀린 단어는 오답노트로</p>
+      <h1>단어<span>다넣어</span></h1>
+      <p class="sub">토익 단어 하루 20문제</p>
     </div>
   </header>
 
@@ -507,7 +507,7 @@ function onRoute(){
   saveUi(); stopSpeak(); closeDrawer(false); if(view!=="quiz") cancelAutoNext();
   for(const [k,id] of Object.entries(PANELS)) $(id).hidden=k!==view;
   markCurrent();
-  document.title=(view==="book"?bookDay+"일차 단어장":TITLES[view])+" · 토익 단어 OMR";
+  document.title=(view==="book"?bookDay+"일차 단어장":TITLES[view])+" · 단어다넣어";
   renderStats();
   if(view==="book"){markSeen(bookDay); renderBook()}
   else if(view==="today") renderToday();
